@@ -21,6 +21,6 @@ p2.data.wAxisZ = 0
 p2.data.wAxisZRot = 0
 p2.data.lButtons = 0
 
-# send data to vJoy device
+# llsend data to vJoy device
 p1.update()
 p2.update()

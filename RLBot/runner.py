@@ -57,10 +57,10 @@ def run_agent(inputs, team, q, isLocked):
 	config.read('rlbot.cfg')
 	if team == "blue":
 		agent1 = importlib.import_module(config.get('Player Configuration', 'p1Agent'))
-		agent = agent1.agent("blue")
+		agent = agent1.Agent("blue")
 	else:
 		agent2 = importlib.import_module(config.get('Player Configuration', 'p2Agent'))
-		agent = agent2.agent("orange")
+		agent = agent2.Agent("orange")
 	while True:
 		if not isLocked.value:
 			isLocked.value = 1
@@ -104,8 +104,9 @@ if __name__ == '__main__':
 	output1 = [16383, 16383, 32767, 0, 0, 0, 0]
 	output2 = [16383, 16383, 32767, 0, 0, 0, 0]
 
-	rtd = importlib.import_module("displays." + config.get('RLBot Configuration', 'display')).real_time_display()
-	rtd.build_initial_window(agent1.BOT_NAME, agent2.BOT_NAME)
+	# todo <overlay> files for the overlay are currently not in this project
+	# rtd = importlib.import_module("displays." + config.get('RLBot Configuration', 'display')).real_time_display()
+	# rtd.build_initial_window(agent1.BOT_NAME, agent2.BOT_NAME)
 
 	ph = PlayHelper.PlayHelper()
 
@@ -119,7 +120,8 @@ if __name__ == '__main__':
 	while True:
 		updateFlag = False
 
-		rtd.UpdateDisplay(displayInputs)
+		# todo <overlay>
+		# rtd.UpdateDisplay(displayInputs)
 
 		try:
 			output1 = q1.get()
@@ -136,5 +138,6 @@ if __name__ == '__main__':
 		if updateFlag:
 			ph.update_controllers(output1, output2)
 
-		rtd.UpdateKeyPresses(output1, output2)
+		# todo <overlay>
+		# rtd.UpdateKeyPresses(output1, output2)
 		time.sleep(0.01)

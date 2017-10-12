@@ -12,7 +12,7 @@ n_input = 41
 n_output = 14
 
 n_epochs = 1
-batch_size = 100
+batch_size = 5000
 
 
 # simple feedforward (multilayer perceptron) neural net with three hidden layers
@@ -77,18 +77,19 @@ def recurrent_nn():
 	return x, y, output
 
 
-# todo runs out of memory, after last epoch is completed, trying to allocate tensor of shape (1mil, 512)
-def train_neural_network():
+# todo runs out of memory, after last epoch is completed, trying to allocate tensor of shape (0.1mil, 512)
+def train_neural_network(data_file_name):
 	# simple feed forward neural net
-	# train_x, train_y, test_x, test_y = get_feature_sets_ff('all_data')
+	# train_x, train_y, test_x, test_y = get_feature_sets_ff(data_file_name)
 
 	# recurrent neural net
-	train_x, train_y, test_x, test_y = get_feature_sets_recurrent('all_data')
+	train_x, train_y, test_x, test_y = get_feature_sets_recurrent(data_file_name)
 
 	print(train_x[0])
 
 	train_set_size = len(train_x)
-	set_size = train_set_size + len(test_x)
+	test_set_size = len(test_x)
+	set_size = train_set_size + test_set_size
 	print('Data set size: ', set_size)
 
 	# x, y, output = tri_layer_ff_nn()
@@ -121,14 +122,30 @@ def train_neural_network():
 				epoch_loss += c
 
 				i += batch_size
+				print('\tEpoch progress: ', round(end/train_set_size, 2)*100)
 
 			print('Epoch', epoch + 1, 'completed out of', n_epochs, ' loss: ', epoch_loss)
 
+		saver.save(sess, "./Trained_NNs/Flow_Bot_RNN_1M.ckpt")
+		print('saved session')
+
 		correct = tf.equal(tf.sigmoid(output), tf.sigmoid(y))
 		accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-		print('Accuracy: ', accuracy.eval({x: test_x, y: test_y}))
 
-		saver.save(sess, "./Trained_NNs/Flow_Bot_RNN.ckpt")
+		i = 0
+		acc = 0.0
+		while i < test_set_size:
+			start = i
+			end = i + batch_size
+
+			batch_x = np.array(test_x[start:end])
+			batch_y = np.array(test_y[start:end])
+
+			acc += accuracy.eval({x: batch_x, y: batch_y})
+			i += batch_size
+
+		print('Accuracy: ', acc/(test_set_size/batch_size))
 
 
-train_neural_network()
+if __name__ == '__main__':
+	train_neural_network('all_data')

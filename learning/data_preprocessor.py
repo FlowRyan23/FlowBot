@@ -209,7 +209,7 @@ def get_feature_sets_recurrent(file_name, test_size=0.1):
 
 
 if __name__ == '__main__':
-	num_read, num_culled = process('training_data_1507373730')
+	num_read, num_culled = process('training_data_1507408321')
 	print('Read: ', num_read)
 	print('Culled: ', num_culled)
 	print('Retained: ', num_read - num_culled)

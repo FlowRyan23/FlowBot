@@ -1,5 +1,7 @@
 import tensorflow as tf
 import atexit
+from learning.Learner import tri_layer_ff_nn
+from learning.Learner import recurrent_nn
 
 # Optional Information. Fill out only if you wish.
 
@@ -10,8 +12,8 @@ import atexit
 
 
 # This is the name that will be displayed on screen in the real time display!
-BOT_NAME = "FlowBot #24h coding challenge"
-NET_NAME = 'Flow_Bot_NN_23on930k'
+BOT_NAME = "FlowBot"
+NET_NAME = 'Flow_Bot_RNN_1M'
 
 n_nodes_hl1 = 500
 n_nodes_hl2 = 500
@@ -22,7 +24,7 @@ n_input = 41
 n_output = 14
 
 
-def get_input_vector(gameTickPacket):
+def get_input_vector_ff(gameTickPacket):
 	# [BallX, -Y, -Z, BallRotX, -Y, -Z, BallVelX, -Y, -Z, BallAngVelX, -Y, -Z, BallAccX, -Y, -Z] entrys 0-14 (SelfInfo)
 	# [SelfX, -Y, -Z, SelfRotX, -Y, -Z, SelfVelX, -Y, -Z, SelfAngVelX, -Y, -Z, SelfAccX, -Y, -Z, Boost] entrys 15-24 (PlayerInfo self)
 	# [OppX, -Y, -Z, OppRotX, -Y, -Z, OppVelX, -Y, -Z, OppAngVelX, -Y, -Z, OppAccX, -Y, -Z, Boost] entrys 25-40 (PlayerInfo opponent)
@@ -71,31 +73,16 @@ def get_input_vector(gameTickPacket):
 	return [vector]
 
 
-def neural_network_model(data):
-	hidden_1_layer = {'weights': tf.Variable(tf.random_normal([n_input, n_nodes_hl1])),
-					  'biases': tf.Variable(tf.random_normal([n_nodes_hl1]))}
-	hidden_2_layer = {'weights': tf.Variable(tf.random_normal([n_nodes_hl1, n_nodes_hl2])),
-					  'biases': tf.Variable(tf.random_normal([n_nodes_hl2]))}
-	hidden_3_layer = {'weights': tf.Variable(tf.random_normal([n_nodes_hl2, n_nodes_hl3])),
-					  'biases': tf.Variable(tf.random_normal([n_nodes_hl3]))}
-	output_layer = {'weights': tf.Variable(tf.random_normal([n_nodes_hl3, n_output])),
-					'biases': tf.Variable(tf.random_normal([n_output]))}
+def get_input_vector_rec(game_tick_packet):
+	ff_vector = get_input_vector_ff(game_tick_packet)
+	rec_vector = []
 
-	# input*weights +biases
-	l1 = tf.add(tf.matmul(data, hidden_1_layer['weights']), hidden_1_layer['biases'])
-	l1 = tf.nn.relu(l1)  # relu "rectified linear ?"
+	# todo input_vector not in right shape: "ValueError: Cannot feed value of shape (1, 1, 41) for Tensor 'Placeholder:0', which has shape '(?, 41, 1)'"
+	# [[[val], [val], ...]]
+	for val in ff_vector[0]:
+		rec_vector.append([val])
 
-	# l1*weights +biases
-	l2 = tf.add(tf.matmul(l1, hidden_2_layer['weights']), hidden_2_layer['biases'])
-	l2 = tf.nn.relu(l2)
-
-	# l2*weights +biases
-	l3 = tf.add(tf.matmul(l2, hidden_3_layer['weights']), hidden_3_layer['biases'])
-	l3 = tf.nn.relu(l3)
-
-	output = tf.matmul(l3, output_layer['weights']) + output_layer['biases']
-
-	return output
+	return [rec_vector]
 
 
 def restore_session():
@@ -105,7 +92,7 @@ def restore_session():
 	sess = tf.Session(config=config)
 	sess.run(tf.global_variables_initializer())
 
-	nn_path = '../Training/Trained NNs/' + NET_NAME + '.ckpt'
+	nn_path = '../learning/Trained_NNs/' + NET_NAME + '.ckpt'
 	saver.restore(sess, nn_path)
 
 	return sess
@@ -134,14 +121,16 @@ def convert_button_output(value):
 class Agent:
 	def __init__(self, team):
 		self.team = team  # use self.team to determine what team you are. I will set to "blue" or "orange"
-		self.x = tf.placeholder('float', [1, n_input])
-		self.y = neural_network_model(self.x)
+		# self.x, _, self.y = tri_layer_ff_nn()
+		self.x, _, self.y = recurrent_nn()
+
 		self.sess = restore_session()
 		atexit.register(self.close_session)
 
 	def get_output_vector(self, sharedValue):
 		game_tick_packet = sharedValue.GameTickPacket
-		nn_input_vector = get_input_vector(game_tick_packet)
+		# nn_input_vector = get_input_vector_ff(game_tick_packet)
+		nn_input_vector = get_input_vector_rec(game_tick_packet)
 
 		nn_output_vector = self.sess.run(self.y, feed_dict={self.x: nn_input_vector})[0]
 

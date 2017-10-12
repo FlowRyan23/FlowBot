@@ -1,2 +1,2 @@
-model_checkpoint_path: "Flow_Bot_RNN.ckpt"
-all_model_checkpoint_paths: "Flow_Bot_RNN.ckpt"
+model_checkpoint_path: "Flow_Bot_RNN_1M.ckpt"
+all_model_checkpoint_paths: "Flow_Bot_RNN_1M.ckpt"
